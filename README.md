@@ -1,5 +1,7 @@
 # amort_payments_view
 
+## live link https://amortization-pay-view.vercel.app/
+
 ## Project setup
 ```
 npm install
