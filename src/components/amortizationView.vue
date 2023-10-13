@@ -4,62 +4,20 @@ import amortizationsList from "../utils/amortizations.json"
 
 export default {
   name: "AmortizationView",
-  methods: {
-    formatDate(dateString) {
-      const options = {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      }
-      return new Date(dateString).toLocaleString(undefined, options)
-    },
-  },
   setup() {
-    // State
-    // const currentPage = ref(0)
-    // const itemsPerPage = ref(20)
-    // const amortizations = ref(amortizationsList)
+    // pagination
+    const currentPage = ref(0)
+    const itemsPerPage = ref(20)
+    // data
+    const amortizations = ref(amortizationsList)
+    // filters
+    const selectedStatus = ref("")
+    const selectedProjectId = ref(0)
 
-    // // Computed properties
-    // const maxPage = computed(
-    //   () => Math.ceil(amortizations.value.length / itemsPerPage.value) - 1
-    // )
-    // const displayedAmortizations = computed(() => {
-    //   const start = currentPage.value * itemsPerPage.value
-    //   const end = start + itemsPerPage.value
-    //   return amortizations.value.slice(start, end)
-    // })
-
-    // // Methods
-    // const nextPage = () => {
-    //   if (currentPage.value < maxPage.value) {
-    //     currentPage.value += 1
-    //   }
-    // }
-
-    // const prevPage = () => {
-    //   if (currentPage.value > 0) {
-    //     currentPage.value -= 1
-    //   }
-    // }
-
-    // return {
-    //   currentPage,
-    //   maxPage,
-    //   displayedAmortizations,
-    //   nextPage,
-    //   prevPage,
-    // }
-    const currentPage = ref(0) // pagination
-    const itemsPerPage = ref(20) // pagination
-    const amortizations = ref(amortizationsList) // data
-    const selectedStatus = ref("") // filter
-    const selectedProjectId = ref(0) // filter
+    // Computed
 
     const filteredAmortizations = computed(() => {
+      // to manage filters
       let filtered = amortizations.value
 
       if (selectedStatus.value) {
@@ -75,49 +33,32 @@ export default {
     })
 
     const maxPage = computed(
+      // max page number based on the length of the amortizations list
+      // used to disable nextpage button and show info to user
       () =>
         Math.ceil(filteredAmortizations.value.length / itemsPerPage.value) - 1
     )
 
     const displayedAmortizations = computed(() => {
-      const start = currentPage.value * itemsPerPage.value
-      const end = start + itemsPerPage.value
-      return filteredAmortizations.value.slice(start, end)
+      // to select the items to show per page
+      const start = currentPage.value * itemsPerPage.value // 0 * 20 = 0
+      const end = start + itemsPerPage.value // 0 + 20 = 20
+      return filteredAmortizations.value.slice(start, end) // will return the first 20 items of the amortizations array
     })
 
-    // Reset currentPage whenever a filter changes.
-    watch([selectedStatus, selectedProjectId], () => {
-      currentPage.value = 0
-    })
-    // Computed properties
-    // const maxPage = computed(
-    //   () => Math.ceil(amortizations.value.length / itemsPerPage.value) - 1
-    // )
+    function formatDate(dateString) {
+      // to show date in more user friendly way
+      const options = {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }
+      return new Date(dateString).toLocaleString(undefined, options)
+    }
 
-    // const displayedAmortizations = computed(() => {
-
-    //   const start = currentPage.value * itemsPerPage.value
-    //   const end = start + itemsPerPage.value
-
-    //   let filteredAmortizations = amortizations.value
-
-    //   // Filtering logic can be applied here, e.g.:
-    //   if (selectedStatus.value) {
-    //     filteredAmortizations = filteredAmortizations.filter(
-    //       (a) => a.state === selectedStatus.value
-    //     )
-    //   }
-    //   if (selectedProjectId.value) {
-    //     console.log(selectedProjectId.value)
-    //     filteredAmortizations = filteredAmortizations.filter(
-    //       (a) => a.project_id === selectedProjectId.value
-    //     )
-    //   }
-
-    //   return filteredAmortizations.slice(start, end)
-    // })
-
-    // Methods
     const nextPage = () => {
       if (currentPage.value < maxPage.value) {
         currentPage.value += 1
@@ -130,16 +71,18 @@ export default {
       }
     }
 
-    const filterByStatus = (event) => {
-      selectedStatus.value = event.target.value
-    }
+    // go to the first page whenever a filter changes.
+    watch([selectedStatus, selectedProjectId], () => {
+      currentPage.value = 0
+    })
 
-    const filterByProjectId = (event) => {
-      selectedProjectId.value = Number(event.target.value)
-    }
-
-    const projectIds = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) // Initialize with project IDs.
-
+    // initialize list of sorted IDS
+    // used to show options on filtering by id
+    const projectIds = ref(
+      [...new Set(amortizations.value.map((a) => a.project_id))].sort(
+        (a, b) => a - b
+      )
+    )
     // Expose to template
     return {
       currentPage,
@@ -147,11 +90,10 @@ export default {
       displayedAmortizations,
       nextPage,
       prevPage,
-      filterByStatus,
-      filterByProjectId,
       projectIds,
       selectedStatus,
       selectedProjectId,
+      formatDate,
     }
   },
 }
@@ -161,62 +103,52 @@ export default {
   <h1 class="text-2xl mt-4 mb-8">Amortization payments view</h1>
   <div class="px-9 relative h-screen flex flex-col text-sm">
     <!-- Table -->
-    <transition name="fade">
-      <table
-        class="min-w-full bg-white scroll-table flex-1 overflow-y-auto scroll-table"
-      >
-        <thead class="sticky top-0 bg-white">
-          <tr class="border-b-2">
-            <th class="py-1 px-1">State</th>
-            <th class="py-1 px-1">Schedule Date</th>
-            <th class="py-1 px-1">Amount</th>
-            <th class="py-1 px-1">Project ID</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="amortization in displayedAmortizations"
-            :key="amortization.schedule_date"
-          >
-            <td class="py-1 px-1 flex items-center">
-              <span
-                :class="[
-                  'w-4 h-4 rounded-full mr-2',
-                  amortization.state === 'paid'
-                    ? 'bg-green-500'
-                    : 'bg-gray-400',
-                ]"
-              ></span>
-              {{ amortization.state }}
-            </td>
-            <td class="py-1 px-1">
-              {{ formatDate(amortization.schedule_date) }}
-            </td>
-            <td class="py-1 px-1">$ {{ amortization.amount }}</td>
-            <td class="py-1 px-1">{{ amortization.project_id }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </transition>
+    <table
+      class="min-w-full bg-white scroll-table flex-1 overflow-y-auto scroll-table"
+    >
+      <thead class="sticky top-0 bg-white">
+        <tr class="border-b-2">
+          <th class="py-1 px-1">State</th>
+          <th class="py-1 px-1">Schedule Date</th>
+          <th class="py-1 px-1">Amount</th>
+          <th class="py-1 px-1">Project ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="amortization in displayedAmortizations"
+          :key="amortization.schedule_date"
+        >
+          <td class="py-1 px-1 flex items-center">
+            <span
+              :class="[
+                'w-4 h-4 rounded-full mr-2',
+                amortization.state === 'paid' ? 'bg-green-500' : 'bg-gray-400',
+              ]"
+            ></span>
+            {{ amortization.state }}
+          </td>
+          <td class="py-1 px-1">
+            {{ formatDate(amortization.schedule_date) }}
+          </td>
+          <td class="py-1 px-1">$ {{ amortization.amount }}</td>
+          <td class="py-1 px-1">{{ amortization.project_id }}</td>
+        </tr>
+      </tbody>
+    </table>
 
-    <!-- Footer agination and filters -->
+    <!-- Footer pagination and filters -->
     <footer
       class="sticky bottom-0 flex justify-between items-center p-1 bg-gray-100"
     >
       <div class="ml-auto flex flex-row justify-between items-center">
-        <select
-          class="p-2 border rounded mr-2"
-          @change="filterByStatus($event)"
-        >
+        <select class="p-2 border rounded mr-2" v-model="selectedStatus">
           <option value="">Filter By State</option>
           <option value="paid">Paid</option>
           <option value="pending">Pending</option>
         </select>
 
-        <select
-          class="p-2 border rounded mr-6"
-          @change="filterByProjectId($event)"
-        >
+        <select class="p-2 border rounded mr-6" v-model="selectedProjectId">
           <option value="">Filter By Project ID</option>
           <option
             v-for="projectId in projectIds"
