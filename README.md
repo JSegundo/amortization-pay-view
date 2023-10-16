@@ -1,5 +1,7 @@
 # amort_payments_view
 
+the main code its in /src/components/amortizationView.vue
+
 ## live link https://amortization-pay-view.vercel.app/
 
 ## Project setup
@@ -22,5 +24,3 @@ npm run build
 npm run lint
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
